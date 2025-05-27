@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>志工系統</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f8fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background-color: #2b7a78;
+      color: white;
+      padding: 24px 0;
+      text-align: center;
+      font-size: 1.8em;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: white;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    form label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    select {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      transition: border 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #2b7a78;
+      outline: none;
+    }
+
+    button,
+    input[type="submit"] {
+      background-color: #2b7a78;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover,
+    input[type="submit"]:hover {
+      background-color: #3aafa9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #def2f1;
+    }
+
+    #adminPanel {
+      margin-top: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+
+      form {
+        font-size: 14px;
+      }
+
+      table {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header><h1>志工系統</h1></header>
+  <div class="container">
+
+    <h2>管理員登入</h2>
+    <form id="loginForm">
+      <label>帳號：</label>
+      <input type="text" name="username" required>
+      <label>密碼：</label>
+      <input type="password" name="password" required>
+      <button type="submit">登入</button>
+    </form>
+
+    <h2>申請成為志工</h2>
+    <form id="registerForm">
+      <label>姓名：</label>
+      <input type="text" name="name" required>
+
+      <label>性別：</label>
+      <select name="gender" required>
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
+
+      <label>電話：</label>
+      <input type="text" name="phone">
+
+      <label>地址：</label>
+      <input type="text" name="address">
+
+      <label>Email：</label>
+      <input type="email" name="email">
+
+      <button type="submit">送出申請</button>
+    </form>
+
+    <div id="adminPanel" style="display:none">
+      <h2>所有志工資料</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>性別</th>
+            <th>電話</th>
+            <th>地址</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody id="volunteerTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: form.username.value,
+          password: form.password.value
+        })
+      });
+      const result = await res.json();
+      if (result.success) {
+        window.location.href = "/admin"; 
+      } else {
+        alert('登入失敗');
+      }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.value,
+          gender: form.gender.value,
+          phone: form.phone.value,
+          address: form.address.value,
+          email: form.email.value
+        })
+      });
+      const result = await res.text();
+      alert(result);
+    });
+
+    async function loadVolunteers() {
+      const res = await fetch('/api/volunteers');
+      const data = await res.json();
+      const tbody = document.getElementById('volunteerTableBody');
+      tbody.innerHTML = '';
+      data.forEach(v => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${v.name}</td>
+            <td>${v.gender}</td>
+            <td>${v.phone}</td>
+            <td>${v.address}</td>
+            <td>${v.email}</td>
+          </tr>
+        `;
+      });
+    }
+  </script>
+</body>
+</html>
+

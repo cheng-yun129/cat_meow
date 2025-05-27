@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>管理員後台</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+      margin: 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 30px;
+      background-color: #2b7a78;
+      color: white;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header a {
+      background-color: #f44336;
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    section {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #def2f1;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 6px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .approve-btn {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .delete-btn {
+      background-color: #f44336;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>管理員後台</h1>
+    <a href="/logout">🚪 登出</a>
+  </header>
+
+  <section>
+    <h2>🔶 待審核志工申請</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>姓名</th>
+          <th>性別</th>
+          <th>電話</th>
+          <th>地址</th>
+          <th>Email</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="pendingTableBody"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>🔷 已批准志工資料庫</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>姓名</th>
+          <th>性別</th>
+          <th>電話</th>
+          <th>地址</th>
+          <th>Email</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="approvedTableBody"></tbody>
+    </table>
+  </section>
+
+<script>
+  async function loadVolunteers() {
+    const pendingRes = await fetch('/api/volunteers/pending');
+    const approvedRes = await fetch('/api/volunteers/approved');
+    const pendingData = await pendingRes.json();
+    const approvedData = await approvedRes.json();
+
+    const pendingBody = document.getElementById('pendingTableBody');
+    const approvedBody = document.getElementById('approvedTableBody');
+
+    pendingBody.innerHTML = '';
+    approvedBody.innerHTML = '';
+
+    pendingData.forEach(v => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${v.name}</td>
+        <td>${v.gender}</td>
+        <td>${v.phone}</td>
+        <td>${v.address}</td>
+        <td>${v.email}</td>
+        <td>
+          <button class="approve-btn" onclick="approveVolunteer(${v.id})">✅ 批准</button>
+          <button class="delete-btn" onclick="confirmDelete(${v.id})">🗑 刪除</button>
+        </td>
+      `;
+      pendingBody.appendChild(tr);
+    });
+
+    approvedData.forEach(v => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${v.name}</td>
+        <td>${v.gender}</td>
+        <td>${v.phone}</td>
+        <td>${v.address}</td>
+        <td>${v.email}</td>
+        <td>
+          <button class="delete-btn" onclick="confirmDelete(${v.id})">🗑 刪除</button>
+        </td>
+      `;
+      approvedBody.appendChild(tr);
+    });
+  }
+
+  async function approveVolunteer(id) {
+    const res = await fetch(`/api/volunteers/${id}/approve`, { method: 'PUT' });
+    if (res.ok) {
+      alert('已批准');
+      loadVolunteers();
+    }
+  }
+
+  async function confirmDelete(id) {
+    const sure = confirm("❗ 確定要刪除這位志工嗎？這個動作無法復原！");
+    if (!sure) return;
+    const res = await fetch(`/api/volunteers/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      alert('已刪除');
+      loadVolunteers();
+    }
+  }
+
+  loadVolunteers();
+</script>
+</body>
+</html>
+
